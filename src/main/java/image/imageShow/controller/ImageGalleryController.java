@@ -28,112 +28,112 @@ import java.util.Optional;
 
 @Controller
 public class ImageGalleryController {
-	
-	@Value("${uploadDir}")
-	private String uploadFolder;
 
-	@Autowired
-	private ImageGalleryService imageGalleryService;
+    @Value("${uploadDir}")
+    private String uploadFolder;
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private ImageGalleryService imageGalleryService;
 
-	@GetMapping(value = {"/", "/home"})
-	public String addProductPage() {
-		return "index";
-	}
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-	@PostMapping("/image/saveImageDetails")
-	public @ResponseBody ResponseEntity<?> createProduct(@RequestParam("name") String name,
-			@RequestParam("price") double price, @RequestParam("description") String description, Model model, HttpServletRequest request
-			,final @RequestParam("image") MultipartFile file) {
-		try {
-			//String uploadDirectory = System.getProperty("user.dir") + uploadFolder;
-			String uploadDirectory = request.getServletContext().getRealPath(uploadFolder);
-			log.info("uploadDirectory:: " + uploadDirectory);
-			String fileName = file.getOriginalFilename();
-			String filePath = Paths.get(uploadDirectory, fileName).toString();
-			log.info("FileName: " + file.getOriginalFilename());
-			if (fileName == null || fileName.contains("..")) {
-				model.addAttribute("invalid", "Sorry! Filename contains invalid path sequence \" + fileName");
-				return new ResponseEntity<>("Sorry! Filename contains invalid path sequence " + fileName, HttpStatus.BAD_REQUEST);
-			}
-			String[] names = name.split(",");
-			String[] descriptions = description.split(",");
-			Date createDate = new Date();
-			log.info("Name: " + names[0]+" "+filePath);
-			log.info("description: " + descriptions[0]);
-			log.info("price: " + price);
-			try {
-				File dir = new File(uploadDirectory);
-				if (!dir.exists()) {
-					log.info("Folder Created");
-					dir.mkdirs();
-				}
-				// Save the file locally
-				BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath)));
-				stream.write(file.getBytes());
-				stream.close();
-			} catch (Exception e) {
-				log.info("in catch");
-				e.printStackTrace();
-			}
-			byte[] imageData = file.getBytes();
-			ImageGallery imageGallery = new ImageGallery();
-			imageGallery.setName(names[0]);
-			imageGallery.setImage(imageData);
-			imageGallery.setPrice(price);
-			imageGallery.setDescription(descriptions[0]);
-			imageGallery.setCreateDate(createDate);
-			imageGalleryService.saveImage(imageGallery);
-			log.info("HttpStatus===" + new ResponseEntity<>(HttpStatus.OK));
-			return new ResponseEntity<>("Product Saved With File - " + fileName, HttpStatus.OK);
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.info("Exception: " + e);
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-	}
-	
-	@GetMapping("/image/display/{id}")
-	@ResponseBody
-	void showImage(@PathVariable("id") Long id, HttpServletResponse response, Optional<ImageGallery> imageGallery)
-			throws ServletException, IOException {
-		log.info("Id :: " + id);
-		imageGallery = imageGalleryService.getImageById(id);
-		response.setContentType("image/jpeg, image/jpg, image/png, image/gif");
-		response.getOutputStream().write(imageGallery.get().getImage());
-		response.getOutputStream().close();
-	}
+    @GetMapping(value = {"/", "/home"})
+    public String addProductPage() {
+        return "index";
+    }
 
-	@GetMapping("/image/imageDetails")
-	String showProductDetails(@RequestParam("id") Long id, Optional<ImageGallery> imageGallery, Model model) {
-		try {
-			log.info("Id :: " + id);
-			if (id != 0) {
-				imageGallery = imageGalleryService.getImageById(id);
-			
-				log.info("products :: " + imageGallery);
-				if (imageGallery.isPresent()) {
-					model.addAttribute("id", imageGallery.get().getId());
-					model.addAttribute("description", imageGallery.get().getDescription());
-					model.addAttribute("name", imageGallery.get().getName());
-					model.addAttribute("price", imageGallery.get().getPrice());
-					return "imagedetails";
-				}
-				return "redirect:/home";
-			}
-		return "redirect:/home";
-		} catch (Exception e) {
-			e.printStackTrace();
-			return "redirect:/home";
-		}	
-	}
+    @PostMapping("/image/saveImageDetails")
+    public @ResponseBody ResponseEntity<?> createProduct(@RequestParam("name") String name,
+                                                         @RequestParam("price") double price, @RequestParam("description") String description, Model model, HttpServletRequest request
+            ,final @RequestParam("image") MultipartFile file) {
+        try {
+            //String uploadDirectory = System.getProperty("user.dir") + uploadFolder;
+            String uploadDirectory = request.getServletContext().getRealPath(uploadFolder);
+            log.info("uploadDirectory:: " + uploadDirectory);
+            String fileName = file.getOriginalFilename();
+            String filePath = Paths.get(uploadDirectory, fileName).toString();
+            log.info("FileName: " + file.getOriginalFilename());
+            if (fileName == null || fileName.contains("..")) {
+                model.addAttribute("invalid", "Sorry! Filename contains invalid path sequence \" + fileName");
+                return new ResponseEntity<>("Sorry! Filename contains invalid path sequence " + fileName, HttpStatus.BAD_REQUEST);
+            }
+            String[] names = name.split(",");
+            String[] descriptions = description.split(",");
+            Date createDate = new Date();
+            log.info("Name: " + names[0]+" "+filePath);
+            log.info("description: " + descriptions[0]);
+            log.info("price: " + price);
+            try {
+                File dir = new File(uploadDirectory);
+                if (!dir.exists()) {
+                    log.info("Folder Created");
+                    dir.mkdirs();
+                }
+                // Save the file locally
+                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filePath)));
+                stream.write(file.getBytes());
+                stream.close();
+            } catch (Exception e) {
+                log.info("in catch");
+                e.printStackTrace();
+            }
+            byte[] imageData = file.getBytes();
+            ImageGallery imageGallery = new ImageGallery();
+            imageGallery.setName(names[0]);
+            imageGallery.setImage(imageData);
+            imageGallery.setPrice(price);
+            imageGallery.setDescription(descriptions[0]);
+            imageGallery.setCreateDate(createDate);
+            imageGalleryService.saveImage(imageGallery);
+            log.info("HttpStatus===" + new ResponseEntity<>(HttpStatus.OK));
+            return new ResponseEntity<>("Product Saved With File - " + fileName, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.info("Exception: " + e);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
 
-	@GetMapping("/image/show")
-	String show(Model map) {
-		List<ImageGallery> images = imageGalleryService.getAllActiveImages();
-		map.addAttribute("images", images);
-		return "images";
-	}
+    @GetMapping("/image/display/{id}")
+    @ResponseBody
+    void showImage(@PathVariable("id") Long id, HttpServletResponse response, Optional<ImageGallery> imageGallery)
+            throws ServletException, IOException {
+        log.info("Id :: " + id);
+        imageGallery = imageGalleryService.getImageById(id);
+        response.setContentType("image/jpeg, image/jpg, image/png, image/gif");
+        response.getOutputStream().write(imageGallery.get().getImage());
+        response.getOutputStream().close();
+    }
+
+    @GetMapping("/image/imageDetails")
+    String showProductDetails(@RequestParam("id") Long id, Optional<ImageGallery> imageGallery, Model model) {
+        try {
+            log.info("Id :: " + id);
+            if (id != 0) {
+                imageGallery = imageGalleryService.getImageById(id);
+
+                log.info("products :: " + imageGallery);
+                if (imageGallery.isPresent()) {
+                    model.addAttribute("id", imageGallery.get().getId());
+                    model.addAttribute("description", imageGallery.get().getDescription());
+                    model.addAttribute("name", imageGallery.get().getName());
+                    model.addAttribute("price", imageGallery.get().getPrice());
+                    return "imagedetails";
+                }
+                return "redirect:/home";
+            }
+            return "redirect:/home";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/home";
+        }
+    }
+
+    @GetMapping("/image/show")
+    String show(Model map) {
+        List<ImageGallery> images = imageGalleryService.getAllActiveImages();
+        map.addAttribute("images", images);
+        return "images";
+    }
 }	
 
